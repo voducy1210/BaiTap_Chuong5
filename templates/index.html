@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Bài 1 - Máy tính cơ bản</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .form-group { margin-bottom: 15px; width: 300px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], select { width: 100%; padding: 8px; box-sizing: border-box; }
+        .error-message { color: red; font-size: 0.9em; margin-top: 5px; }
+        .result-box { margin-top: 20px; font-size: 1.2em; color: green; font-weight: bold; }
+        button { padding: 8px 16px; font-size: 1em; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Máy tính cơ bản</h2>
+
+    <form method="POST" action="/">
+        <!-- Ô nhập số thứ nhất (a) -->
+        <div class="form-group">
+            <label for="a">Số thứ nhất (a):</label>
+            <input type="text" id="a" name="a" value="{{ a }}">
+            {% if error_a %}
+                <div class="error-message">{{ error_a }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Chọn phép toán (op) -->
+        <div class="form-group">
+            <label for="op">Phép toán (op):</label>
+            <select id="op" name="op">
+                <option value="+" {% if op == '+' %}selected{% endif %}>+</option>
+                <option value="-" {% if op == '-' %}selected{% endif %}>-</option>
+                <option value="*" {% if op == '*' %}selected{% endif %}>*</option>
+                <option value="/" {% if op == '/' %}selected{% endif %}>/</option>
+            </select>
+        </div>
+
+        <!-- Ô nhập số thứ hai (b) -->
+        <div class="form-group">
+            <label for="b">Số thứ hai (b):</label>
+            <input type="text" id="b" name="b" value="{{ b }}">
+            {% if error_b %}
+                <div class="error-message">{{ error_b }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Lỗi chung (ví dụ sửa phép toán % bằng DevTools) -->
+        {% if error_general %}
+            <div class="error-message" style="margin-bottom: 15px;">{{ error_general }}</div>
+        {% endif %}
+
+        <button type="submit">Tính toán</button>
+    </form>
+
+    <!-- Hiển thị kết quả dạng 7 / 2 = 3.5 -->
+    {% if result %}
+        <div class="result-box">
+            Kết quả: {{ result }}
+        </div>
+    {% endif %}
+</body>
+</html>

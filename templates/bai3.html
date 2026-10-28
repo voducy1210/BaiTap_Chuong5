@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Bài 3 - Tính chỉ số BMI{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-info text-white py-3">
+        <h4 class="mb-0 text-center fw-bold">Bài 3: Tính chỉ số BMI</h4>
+    </div>
+    <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('bai3') }}">
+            <!-- Chiều cao -->
+            <div class="mb-3">
+                <label for="cao" class="form-label fw-bold">Chiều cao (cm):</label>
+                <input type="text" class="form-control {% if error_cao %}is-invalid{% endif %}" id="cao" name="cao" value="{{ cao }}" placeholder="Ví dụ: 170 hoặc 165,5">
+                {% if error_cao %}
+                    <div class="invalid-feedback">{{ error_cao }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Cân nặng -->
+            <div class="mb-3">
+                <label for="nang" class="form-label fw-bold">Cân nặng (kg):</label>
+                <input type="text" class="form-control {% if error_nang %}is-invalid{% endif %}" id="nang" name="nang" value="{{ nang }}" placeholder="Ví dụ: 65">
+                {% if error_nang %}
+                    <div class="invalid-feedback">{{ error_nang }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-info text-white w-100 fw-bold py-2">Tính BMI</button>
+        </form>
+
+        <!-- Hiển thị kết quả -->
+        {% if bmi %}
+            <div class="alert alert-{{ alert_class }} mt-4 mb-0 text-center fs-5 fw-bold shadow-sm">
+                {{ bmi }} · {{ category }}
+                {% if weight_range %}
+                    <div class="fs-6 fw-normal text-dark mt-1">
+                        Cân nặng nên có: <strong>{{ weight_range }}</strong>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

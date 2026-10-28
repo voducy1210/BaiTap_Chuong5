@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Trang chủ - Chương 5{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4 text-center">
+        <h3 class="card-title text-primary fw-bold mb-3">Bài tập Chương 5</h3>
+        <p class="text-muted mb-4">Xử lý Form & Dữ liệu người dùng trong Flask</p>
+
+        <div class="d-grid gap-3">
+            <a href="{{ url_for('bai1') }}" class="btn btn-outline-primary btn-lg fw-bold p-3">
+                Bài 1: Máy tính cơ bản
+            </a>
+            <a href="{{ url_for('bai2') }}" class="btn btn-outline-success btn-lg fw-bold p-3">
+                Bài 2: Tính điểm học phần
+            </a>
+            <a href="{{ url_for('bai3') }}" class="btn btn-outline-info btn-lg fw-bold p-3">
+                Bài 3: Tính chỉ số BMI
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

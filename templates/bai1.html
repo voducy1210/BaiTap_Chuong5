@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Bài 1 - Máy tính cơ bản{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white py-3">
+        <h4 class="mb-0 text-center fw-bold">Bài 1: Máy tính cơ bản</h4>
+    </div>
+    <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('bai1') }}">
+            <!-- Số thứ nhất a -->
+            <div class="mb-3">
+                <label for="a" class="form-label fw-bold">Số thứ nhất (a):</label>
+                <input type="text" class="form-control {% if error_a %}is-invalid{% endif %}" id="a" name="a" value="{{ a }}" placeholder="Ví dụ: 7 hoặc 2,5">
+                {% if error_a %}
+                    <div class="invalid-feedback">{{ error_a }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Phép toán op -->
+            <div class="mb-3">
+                <label for="op" class="form-label fw-bold">Phép toán (op):</label>
+                <select class="form-select" id="op" name="op">
+                    <option value="+" {% if op == '+' %}selected{% endif %}>+ (Cộng)</option>
+                    <option value="-" {% if op == '-' %}selected{% endif %}>- (Trừ)</option>
+                    <option value="*" {% if op == '*' %}selected{% endif %}>* (Nhân)</option>
+                    <option value="/" {% if op == '/' %}selected{% endif %}>/ (Chia)</option>
+                </select>
+            </div>
+
+            <!-- Số thứ hai b -->
+            <div class="mb-3">
+                <label for="b" class="form-label fw-bold">Số thứ hai (b):</label>
+                <input type="text" class="form-control {% if error_b %}is-invalid{% endif %}" id="b" name="b" value="{{ b }}" placeholder="Ví dụ: 2">
+                {% if error_b %}
+                    <div class="invalid-feedback">{{ error_b }}</div>
+                {% endif %}
+            </div>
+
+            {% if error_general %}
+                <div class="alert alert-danger py-2 mb-3">{{ error_general }}</div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Tính toán</button>
+        </form>
+
+        <!-- Hiển thị kết quả -->
+        {% if result %}
+            <div class="alert alert-success mt-4 mb-0 text-center fs-5 fw-bold">
+                Kết quả: {{ result }}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
