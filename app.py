@@ -1,195 +1,117 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import String, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+TEXT = {"Content-Type": "text/plain; charset=utf-8"}
+
+
+# --- BƯỚC 2: CẤU HÌNH CSDL ---
+class Base(DeclarativeBase):
+    pass
+
+
+db = SQLAlchemy(model_class=Base)
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = "dev-chi-dung-khi-phat-trien"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///qlsv.db"
 
-def parse_number(val_str):
-    if not val_str or not val_str.strip():
-        return None, "Vui lòng nhập một số."
-    clean_str = val_str.strip().replace(",", ".")
-    try:
-        return float(clean_str), None
-    except ValueError:
-        return None, "Vui lòng nhập một số."
+db.init_app(app)
 
 
-def format_num(n):
-    return str(int(n)) if n.is_integer() else str(n)
+# --- BƯỚC 3: KHAI BÁO MODEL STUDENT ---
+class Student(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    mssv: Mapped[str] = mapped_column(String(10), unique=True)
+    name: Mapped[str] = mapped_column(String(100))
+    gpa: Mapped[float] = mapped_column(default=0.0)
+
+    def __repr__(self):
+        return f"<Student {self.mssv} {self.name}>"
 
 
-def validate_score(val_str):
-    if not val_str or not val_str.strip():
-        return None, "Vui lòng nhập một số."
-    clean_str = val_str.strip().replace(",", ".")
-    try:
-        score = float(clean_str)
-    except ValueError:
-        return None, "Vui lòng nhập một số."
-
-    if score < 0 or score > 10:
-        return None, "Điểm phải từ 0 đến 10."
-    return score, None
+# --- BƯỚC 4: TẠO BẢNG CSDL ---
+with app.app_context():
+    db.create_all()
 
 
-def validate_height(val_str):
-    if not val_str or not val_str.strip():
-        return None, "Vui lòng nhập một số."
-    clean_str = val_str.strip().replace(",", ".")
-    try:
-        h = float(clean_str)
-    except ValueError:
-        return None, "Vui lòng nhập một số."
+# --- BƯỚC 5: ROUTE THÊM DỮ LIỆU MẪU ---
+@app.get("/them-mau")
+def add_sample():
+    total = db.session.scalar(db.select(func.count(Student.id)))
+    if total > 0:
+        return f"Đã có {total} sinh viên, không thêm nữa."
 
-    if h < 50 or h > 250:
-        return None, "Giá trị phải từ 50 đến 250. (nhập mét thay vì cm)"
-    return h, None
+    an = Student(mssv="23T1020001", name="Nguyễn Văn An", gpa=8.5)
+    before = an.id
 
+    db.session.add(an)
+    db.session.add_all(
+        [
+            Student(mssv="23T1020002", name="Trần Thị Bình", gpa=6.8),
+            Student(mssv="23T1020003", name="Lê Hoàng Cường", gpa=9.1),
+            Student(mssv="23T1020004", name="Phạm Minh Dũng", gpa=4.5),
+            Student(mssv="23T1020005", name="Hoàng Thu Hà", gpa=7.4),
+        ]
+    )
+    db.session.commit()
 
-def validate_weight(val_str):
-    if not val_str or not val_str.strip():
-        return None, "Vui lòng nhập một số."
-    clean_str = val_str.strip().replace(",", ".")
-    try:
-        w = float(clean_str)
-    except ValueError:
-        return None, "Vui lòng nhập một số."
-
-    if w < 10 or w > 300:
-        return None, "Giá trị phải từ 10 đến 300."
-    return w, None
-
-@app.route("/")
-def home():
-    return render_template("home.html")
-
-
-@app.route("/bai1", methods=["GET", "POST"])
-def bai1():
-    a_str, b_str, op = "", "", "+"
-    error_a, error_b, error_general, result_str = None, None, None, None
-
-    if request.method == "POST":
-        a_str = request.form.get("a", "")
-        b_str = request.form.get("b", "")
-        op = request.form.get("op", "+")
-
-        val_a, error_a = parse_number(a_str)
-        val_b, error_b = parse_number(b_str)
-
-        if op not in ["+", "-", "*", "/"]:
-            error_general = "Phép toán không hợp lệ."
-
-        if val_b == 0 and op == "/":
-            error_b = "Không thể chia cho 0."
-
-        if not error_a and not error_b and not error_general:
-            if op == "+":
-                res = val_a + val_b
-            elif op == "-":
-                res = val_a - val_b
-            elif op == "*":
-                res = val_a * val_b
-            elif op == "/":
-                res = val_a / val_b
-            result_str = f"{format_num(val_a)} {op} {format_num(val_b)} = {format_num(res)}"
-
-    return render_template(
-        "bai1.html",
-        a=a_str,
-        b=b_str,
-        op=op,
-        error_a=error_a,
-        error_b=error_b,
-        error_general=error_general,
-        result=result_str,
+    return (
+        f"Đã thêm 5 sinh viên, id của An: "
+        f"trước commit = {before}, "
+        f"sau commit = {an.id}"
     )
 
 
-@app.route("/bai2", methods=["GET", "POST"])
-def bai2():
-    cc_str, gk_str, ck_str = "", "", ""
-    error_cc, error_gk, error_ck, result_str = None, None, None, None
+# --- BƯỚC 6: ĐỌC DỮ LIỆU VĂN BẢN THUẦN ---
+@app.get("/thu-truy-van")
+def try_queries():
+    if db.session.scalar(db.select(func.count(Student.id))) == 0:
+        return "Chưa có dữ liệu, hãy mở /them-mau trước."
 
-    if request.method == "POST":
-        cc_str = request.form.get("cc", "")
-        gk_str = request.form.get("gk", "")
-        ck_str = request.form.get("ck", "")
+    lines = []
+    lines.append(f"1. get(3): {db.session.get(Student, 3)}")
+    lines.append(f"2. get(99): {db.session.get(Student, 99)}")
 
-        cc, error_cc = validate_score(cc_str)
-        gk, error_gk = validate_score(gk_str)
-        ck, error_ck = validate_score(ck_str)
+    everyone = db.session.execute(db.select(Student)).scalars().all()
+    lines.append(f"3. Tất cả: {len(everyone)} sinh viên")
 
-        if error_cc is None and error_gk is None and error_ck is None:
-            total_score = round(cc * 0.1 + gk * 0.3 + ck * 0.6, 1)
-            if ck < 1.0:
-                letter_grade = "F (điểm thi dưới 1)"
-            else:
-                if total_score >= 8.5:
-                    letter_grade = "A"
-                elif total_score >= 7.0:
-                    letter_grade = "B"
-                elif total_score >= 5.5:
-                    letter_grade = "C"
-                elif total_score >= 4.0:
-                    letter_grade = "D"
-                else:
-                    letter_grade = "F"
-            result_str = f"{total_score} - {letter_grade}"
-
-    return render_template(
-        "bai2.html",
-        cc=cc_str,
-        gk=gk_str,
-        ck=ck_str,
-        error_cc=error_cc,
-        error_gk=error_gk,
-        error_ck=error_ck,
-        result=result_str,
+    stmt = (
+        db.select(Student)
+        .where(Student.gpa >= 8)
+        .order_by(Student.gpa.desc())
     )
+    good = db.session.execute(stmt).scalars().all()
+    lines.append(f"4. Điểm >= 8: {good}")
+
+    binh = db.session.scalar(
+        db.select(Student).filter_by(mssv="23T1020002")
+    )
+    lines.append(f"5. MSSV 23T1020002: {binh}")
+
+    count = db.session.scalar(db.select(func.count(Student.id)))
+    avg = db.session.scalar(db.select(func.avg(Student.gpa)))
+    lines.append(f"6. Số SV: {count}, điểm TB: {avg:.2f}")
+
+    return "\n".join(lines), TEXT
 
 
-@app.route("/bai3", methods=["GET", "POST"])
-def bai3():
-    cao_str, nang_str = "", ""
-    error_cao, error_nang = None, None
-    bmi_res, category, alert_class, weight_range = None, None, None, None
+# --- HIỂN THỊ DANH SÁCH BẰNG RENDER_TEMPLATE & BẢNG HTML ---
+@app.get("/danh-sach")
+def student_list():
+    students = db.session.execute(
+        db.select(Student).order_by(Student.mssv)
+    ).scalars().all()
 
-    if request.method == "POST":
-        cao_str = request.form.get("cao", "")
-        nang_str = request.form.get("nang", "")
-
-        cao_cm, error_cao = validate_height(cao_str)
-        nang_kg, error_nang = validate_weight(nang_str)
-
-        if error_cao is None and error_nang is None:
-            height_m = cao_cm / 100
-            bmi_res = round(nang_kg / (height_m**2), 1)
-            if bmi_res < 18.5:
-                category = "Thiếu cân"
-                alert_class = "warning"  
-            elif bmi_res < 23:
-                category = "Bình thường"
-                alert_class = "success"  
-            elif bmi_res < 25:
-                category = "Thừa cân"
-                alert_class = "warning"  
-            else:
-                category = "Béo phì"
-                alert_class = "danger"  
-
-            min_w = round(18.5 * (height_m**2), 1)
-            max_w = round(22.9 * (height_m**2), 1)
-            weight_range = f"{min_w} – {max_w} kg"
+    total = len(students)
+    avg_gpa = db.session.scalar(db.select(func.avg(Student.gpa))) or 0.0
 
     return render_template(
-        "bai3.html",
-        cao=cao_str,
-        nang=nang_str,
-        error_cao=error_cao,
-        error_nang=error_nang,
-        bmi=bmi_res,
-        category=category,
-        alert_class=alert_class,
-        weight_range=weight_range,
+        "danh_sach.html",
+        students=students,
+        total=total,
+        avg_gpa=avg_gpa
     )
 
 
