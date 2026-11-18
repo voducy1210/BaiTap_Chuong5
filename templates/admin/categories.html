@@ -1,0 +1,78 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Danh mục sách{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm p-4">
+    <h4 class="fw-bold mb-4">Danh mục sách ({{ rows|length }})</h4>
+
+    <div class="row g-4">
+        <!-- Bảng bên trái -->
+        <div class="col-lg-8">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tên danh mục</th>
+                        <th class="text-center">Số sách</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat, book_count in rows %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('admin_books', category_id=cat.id) }}" class="fw-semibold text-dark text-decoration-none">
+                                {{ cat.name }}
+                            </a>
+                        </td>
+                        <td class="text-center">{{ book_count }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('admin_categories', edit_id=cat.id) }}" class="text-decoration-none me-2">Sửa</a>
+                            {% if book_count > 0 %}
+                                <span class="text-muted" title='Không thể xoá "{{ cat.name }}": còn {{ book_count }} sách.'>Xoá</span>
+                            {% else %}
+                                <form method="POST" action="{{ url_for('admin_category_delete', cat_id=cat.id) }}" class="d-inline"
+                                      onsubmit="return confirm('Xoá danh mục {{ cat.name }}?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-link text-danger text-decoration-none p-0">Xoá</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Form bên phải (Thêm / Sửa ngay trên trang) -->
+        <div class="col-lg-4">
+            <div class="bg-light border rounded-3 p-3">
+                <h6 class="fw-bold mb-3">{{ "Sửa danh mục: " + edit_cat.name if edit_cat else "Thêm danh mục" }}</h6>
+                <form method="POST" action="{{ url_for('admin_categories', edit_id=edit_cat.id if edit_cat else None) }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    {% if edit_cat %}
+                        <input type="hidden" name="edit_id" value="{{ edit_cat.id }}">
+                    {% endif %}
+
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label fw-semibold") }}
+                        {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                        {% for err in form.name.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label fw-semibold") }}
+                        {{ form.description(class="form-control", rows="3") }}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">
+                        {{ "Lưu thay đổi" if edit_cat else "+ Thêm" }}
+                    </button>
+                    {% if edit_cat %}
+                        <a href="{{ url_for('admin_categories') }}" class="btn btn-outline-secondary w-100 mt-2">Huỷ sửa</a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Đặt hàng thành công #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm p-4 mx-auto" style="max-width: 720px;">
+    <div class="text-center mb-4">
+        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+        <h3 class="fw-bold mt-2">Đặt hàng thành công!</h3>
+        <p class="text-muted mb-0">Mã đơn hàng: <strong>#{{ order.id }}</strong> · Trạng thái: <span class="badge bg-warning text-dark">{{ order.status }}</span></p>
+    </div>
+
+    <div class="bg-light rounded p-3 mb-3">
+        <h6 class="fw-bold">Thông tin nhận hàng</h6>
+        <p class="mb-1"><strong>Khách hàng:</strong> {{ order.customer_name }} ({{ order.phone }})</p>
+        <p class="mb-1"><strong>Địa chỉ:</strong> {{ order.address }}</p>
+        <p class="mb-0"><strong>Thanh toán:</strong> {{ order.payment_method }}</p>
+    </div>
+
+    <table class="table table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Sách</th>
+                <th class="text-center">SL</th>
+                <th class="text-end">Đơn giá</th>
+                <th class="text-end">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items %}
+            <tr>
+                <td>{{ item.book.title }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-end">{{ "{:,.0f}".format(item.unit_price).replace(",", ".") }} đ</td>
+                <td class="text-end fw-semibold">{{ "{:,.0f}".format(item.unit_price * item.quantity).replace(",", ".") }} đ</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-end">Phí giao hàng</td>
+                <td class="text-end">{{ "Miễn phí" if order.shipping_fee == 0 else "{:,.0f} đ".format(order.shipping_fee).replace(",", ".") }}</td>
+            </tr>
+            <tr>
+                <td colspan="3" class="text-end fw-bold">Tổng thanh toán</td>
+                <td class="text-end fw-bold text-danger">{{ "{:,.0f}".format(order.total_amount).replace(",", ".") }} đ</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="text-center mt-3">
+        <a href="{{ url_for('books_list') }}" class="btn btn-primary px-4">Tiếp tục mua sách</a>
+    </div>
+</div>
+{% endblock %}

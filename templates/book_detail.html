@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }} - Nhà sách Sông Hương{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm p-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small mb-0">
+            <li class="breadcrumb-item"><a href="{{ url_for('books_list') }}" class="text-decoration-none">Sách</a></li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('books_list', category_id=book.category.id) }}" class="text-decoration-none">{{ book.category.name }}</a>
+            </li>
+            <li class="breadcrumb-item active">{{ book.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-md-5">
+            {% if book.cover_image %}
+                <img src="{{ url_for('static', filename='uploads/' + book.cover_image) }}"
+                     class="img-fluid rounded border w-100" style="max-height: 360px; object-fit: cover;" alt="{{ book.title }}">
+            {% else %}
+                <div class="bg-secondary-subtle text-muted d-flex align-items-center justify-content-center rounded border" style="height: 340px;">
+                    Ảnh bìa
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-7">
+            <h3 class="fw-bold mb-1">{{ book.title }}</h3>
+            <p class="text-muted mb-2">Tác giả: {{ book.author }} · {{ book.publisher }}, {{ book.publish_year }}</p>
+            <h4 class="fw-bold mb-2" style="color: #f95738;">{{ "{:,.0f}".format(book.price).replace(",", ".") }} đ</h4>
+            <p class="mb-1 text-muted">Danh mục: <strong class="text-dark">{{ book.category.name }}</strong></p>
+            <p class="mb-3">
+                {% if book.stock > 0 %}
+                    <span class="text-success fw-semibold">● Còn {{ book.stock }} cuốn</span>
+                {% else %}
+                    <span class="text-danger fw-semibold">● Hết hàng</span>
+                {% endif %}
+            </p>
+
+            <p class="text-secondary border-top pt-3">{{ book.description or "Chưa có mô tả chi tiết cho đầu sách này." }}</p>
+
+            {% if max_can_add > 0 %}
+            <form method="POST" action="{{ url_for('book_detail', book_id=book.id) }}" class="mt-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label class="form-label fw-semibold">Số lượng</label>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="input-group" style="width: 140px;">
+                        <button type="button" class="btn btn-outline-primary" onclick="changeQty(-1)">−</button>
+                        <input type="number" id="qtyInput" name="quantity" class="form-control text-center fw-bold"
+                               value="1" min="1" max="{{ max_can_add }}">
+                        <button type="button" class="btn btn-outline-primary" onclick="changeQty(1)">+</button>
+                    </div>
+                    <small class="text-muted">tối đa {{ max_can_add }} (đã có {{ in_cart }} trong giỏ)</small>
+                </div>
+                <button type="submit" class="btn btn-primary px-4 py-2 fw-bold">
+                    <i class="bi bi-cart-plus me-1"></i>Thêm vào giỏ hàng
+                </button>
+            </form>
+            {% else %}
+                <div class="alert alert-warning mt-3 mb-0">
+                    {% if book.stock == 0 %}
+                        Sản phẩm hiện đã hết hàng.
+                    {% else %}
+                        Bạn đã thêm toàn bộ {{ book.stock }} cuốn hiện có vào giỏ hàng.
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function changeQty(delta) {
+    const input = document.getElementById('qtyInput');
+    const max = parseInt(input.max);
+    let val = parseInt(input.value) || 1;
+    val = Math.min(max, Math.max(1, val + delta));
+    input.value = val;
+}
+</script>
+{% endblock %}

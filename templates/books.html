@@ -1,186 +1,68 @@
 {% extends "base.html" %}
-
-{% block title %}Quản lý Sách theo Danh mục{% endblock %}
+{% block title %}Danh sách sách - Nhà sách Sông Hương{% endblock %}
 
 {% block content %}
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <h4 class="mb-0 fw-bold"><i class="bi bi-journal-bookmark-fill text-success me-2"></i>Danh sách Sách</h4>
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addBookModal">
-            <i class="bi bi-plus-lg me-1"></i>Thêm sách mới
-        </button>
-    </div>
-
-    <!-- Thanh Lọc theo Danh mục & Tìm kiếm -->
-    <div class="card-body bg-light border-bottom">
-        <form method="GET" action="{{ url_for('books') }}" class="row g-2 align-items-center">
-            <div class="col-md-4">
-                <select name="category_id" class="form-select" onchange="this.form.submit()">
-                    <option value="">-- Tất cả danh mục --</option>
-                    {% for cat in categories %}
-                        <option value="{{ cat.id }}" {% if selected_category_id == cat.id %}selected{% endif %}>
-                            {{ cat.name }} ({{ cat.books|length }})
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-5">
-                <input type="text" name="q" class="form-control" value="{{ keyword }}" placeholder="Tìm theo tên sách hoặc tác giả...">
-            </div>
-            <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>Lọc</button>
-                {% if selected_category_id or keyword %}
-                    <a href="{{ url_for('books') }}" class="btn btn-outline-secondary">Xóa lọc</a>
-                {% endif %}
-            </div>
-        </form>
-    </div>
-
-    <!-- Bảng Dữ liệu Sách -->
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th class="ps-3">#</th>
-                        <th>Tên sách</th>
-                        <th>Tác giả</th>
-                        <th>Danh mục</th>
-                        <th class="text-end">Đơn giá</th>
-                        <th class="text-center">Số lượng</th>
-                        <th class="text-end pe-3" style="width: 170px;">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for b in books %}
-                    <tr>
-                        <td class="ps-3 text-muted">{{ loop.index }}</td>
-                        <td class="fw-bold">{{ b.title }}</td>
-                        <td>{{ b.author }}</td>
-                        <td>
-                            <a href="{{ url_for('books', category_id=b.category.id) }}" class="badge bg-info text-dark text-decoration-none">
-                                {{ b.category.name }}
-                            </a>
-                        </td>
-                        <td class="text-end fw-semibold text-success">{{ "{:,.0f}".format(b.price) }} đ</td>
-                        <td class="text-center">
-                            <span class="badge {% if b.quantity > 0 %}bg-secondary{% else %}bg-danger{% endif %}">
-                                {{ b.quantity }}
-                            </span>
-                        </td>
-                        <td class="text-end pe-3">
-                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editBookModal{{ b.id }}">
-                                <i class="bi bi-pencil-square"></i> Sửa
-                            </button>
-                            <form action="{{ url_for('delete_book', id=b.id) }}" method="POST" class="d-inline"
-                                  onsubmit="return confirm('Xóa sách {{ b.title }}?');">
-                                <button type="submit" class="btn btn-sm btn-danger">
-                                    <i class="bi bi-trash"></i> Xóa
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-
-                    <!-- Modal Sửa Sách -->
-                    <div class="modal fade" id="editBookModal{{ b.id }}" tabindex="-1">
-                        <div class="modal-dialog">
-                            <form action="{{ url_for('edit_book', id=b.id) }}" method="POST" class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title fw-bold">Cập nhật sách</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">Danh mục <span class="text-danger">*</span></label>
-                                        <select name="category_id" class="form-select" required>
-                                            {% for cat in categories %}
-                                                <option value="{{ cat.id }}" {% if cat.id == b.category_id %}selected{% endif %}>
-                                                    {{ cat.name }}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">Tên sách <span class="text-danger">*</span></label>
-                                        <input type="text" name="title" class="form-control" value="{{ b.title }}" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">Tác giả <span class="text-danger">*</span></label>
-                                        <input type="text" name="author" class="form-control" value="{{ b.author }}" required>
-                                    </div>
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <label class="form-label fw-bold">Đơn giá (VNĐ)</label>
-                                            <input type="number" step="1000" min="0" name="price" class="form-control" value="{{ b.price|int }}" required>
-                                        </div>
-                                        <div class="col-6">
-                                            <label class="form-label fw-bold">Số lượng</label>
-                                            <input type="number" min="0" name="quantity" class="form-control" value="{{ b.quantity }}" required>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                    <button type="submit" class="btn btn-warning fw-bold">Cập nhật</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    {% else %}
-                    <tr>
-                        <td colspan="7" class="text-center text-muted py-4">Không tìm thấy đầu sách nào phù hợp.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="card border-0 shadow-sm p-4">
+    <!-- Thanh tìm kiếm & lọc danh mục -->
+    <form method="GET" action="{{ url_for('books_list') }}" class="row g-2 mb-4">
+        <div class="col-md-7">
+            <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Tìm tên sách, tác giả...">
         </div>
-    </div>
-</div>
+        <div class="col-md-3">
+            <select name="category_id" class="form-select">
+                <option value="">Mọi danh mục</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if selected_category_id == cat.id %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100 fw-bold">Lọc</button>
+        </div>
+    </form>
 
-<!-- Modal Thêm Sách -->
-<div class="modal fade" id="addBookModal" tabindex="-1">
-    <div class="modal-dialog">
-        <form action="{{ url_for('add_book') }}" method="POST" class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title fw-bold">Thêm sách mới</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Thuộc danh mục <span class="text-danger">*</span></label>
-                    <select name="category_id" class="form-select" required>
-                        <option value="">-- Chọn danh mục --</option>
-                        {% for cat in categories %}
-                            <option value="{{ cat.id }}" {% if selected_category_id == cat.id %}selected{% endif %}>
-                                {{ cat.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Tên sách <span class="text-danger">*</span></label>
-                    <input type="text" name="title" class="form-control" placeholder="Nhập tên sách" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Tác giả <span class="text-danger">*</span></label>
-                    <input type="text" name="author" class="form-control" placeholder="Nhập tên tác giả" required>
-                </div>
-                <div class="row g-2">
-                    <div class="col-6">
-                        <label class="form-label fw-bold">Đơn giá (VNĐ)</label>
-                        <input type="number" step="1000" min="0" name="price" class="form-control" value="100000" required>
+    <!-- Lưới thẻ sách -->
+    <div class="row g-3">
+        {% for book in books %}
+        <div class="col-md-4">
+            <div class="card h-100 border rounded-3 shadow-sm">
+                <a href="{{ url_for('book_detail', book_id=book.id) }}" class="text-decoration-none">
+                    {% if book.cover_image %}
+                        <img src="{{ url_for('static', filename='uploads/' + book.cover_image) }}"
+                             class="card-img-top object-fit-cover" style="height: 170px;" alt="{{ book.title }}">
+                    {% else %}
+                        <div class="bg-secondary-subtle text-muted d-flex align-items-center justify-content-center rounded-top" style="height: 170px;">
+                            <i class="bi bi-book fs-1"></i>
+                        </div>
+                    {% endif %}
+                </a>
+                <div class="card-body d-flex flex-column">
+                    <h6 class="card-title fw-bold mb-2">
+                        <a href="{{ url_for('book_detail', book_id=book.id) }}" class="text-dark text-decoration-none">
+                            {{ book.title }}
+                        </a>
+                    </h6>
+                    <div class="d-flex justify-content-between align-items-center mb-3 mt-auto">
+                        <span class="fw-bold" style="color: #f95738;">{{ "{:,.0f}".format(book.price).replace(",", ".") }} đ</span>
+                        <small class="text-muted">Còn {{ book.stock }}</small>
                     </div>
-                    <div class="col-6">
-                        <label class="form-label fw-bold">Số lượng</label>
-                        <input type="number" min="0" name="quantity" class="form-control" value="10" required>
-                    </div>
+
+                    {% if book.stock > 0 %}
+                        <form method="POST" action="{{ url_for('add_to_cart', book_id=book.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-primary w-100 fw-semibold">+ Thêm vào giỏ</button>
+                        </form>
+                    {% else %}
+                        <button class="btn btn-secondary w-100" disabled>Hết hàng</button>
+                    {% endif %}
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                <button type="submit" class="btn btn-success fw-bold">Lưu sách</button>
-            </div>
-        </form>
+        </div>
+        {% else %}
+        <div class="col-12 text-center text-muted py-5">Không tìm thấy sách phù hợp.</div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
